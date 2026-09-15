@@ -2,13 +2,18 @@ spring:
   application:
     name: proclenz
 
+  # Defaults match the local docker-compose database only; every deployed environment sets these variables.
   datasource:
-    url: jdbc:postgresql://localhost:5432/proclenz
-    username: proclenz
-    password: proclenz
+    url: ${PROCLENZ_DB_URL:jdbc:postgresql://localhost:5432/proclenz}
+    username: ${PROCLENZ_DB_USERNAME:proclenz}
+    password: ${PROCLENZ_DB_PASSWORD:proclenz}
+    hikari:
+      pool-name: proclenz-db
+      maximum-pool-size: ${PROCLENZ_DB_POOL_SIZE:10}
 
   jpa:
     hibernate:
+      # Flyway owns the schema; Hibernate only verifies that entity mappings match it.
       ddl-auto: validate
     open-in-view: false
     show-sql: false
@@ -18,6 +23,10 @@ spring:
 
 server:
   port: 8080
+
+logging:
+  pattern:
+    correlation: "[%X{correlationId:-}] "
 
 management:
   endpoints:

@@ -1,4 +1,6 @@
 package com.proclenz.process;
+import com.proclenz.common.ErrorCode;
+import com.proclenz.common.ProclenzException;
 import com.proclenz.event.ProcessEvent;
 import com.proclenz.event.ProcessEventRepository;
 import java.time.Duration;
@@ -14,6 +16,9 @@ public class CaseTimelineService {
     @Transactional(readOnly = true)
     public List<CaseTimelineItem> timeline(String processKey, String caseId) {
         List<ProcessEvent> events = repository.findByProcessKeyAndCaseIdOrderByOccurredAtAscIdAsc(processKey, caseId);
+        if (events.isEmpty()) {
+            throw new ProclenzException(ErrorCode.CASE_NOT_FOUND, "Case '%s' was not found in process '%s'".formatted(caseId, processKey));
+        }
         List<CaseTimelineItem> response = new ArrayList<>();
         for (int i = 0; i < events.size(); i++) {
             ProcessEvent current = events.get(i); ProcessEvent first = events.getFirst();
