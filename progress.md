@@ -21,7 +21,8 @@ real PostgreSQL and committed. Next up is the process registry with configurable
 | `ac41553` | Errors | Consistent `ApiError` (timestamp, status, code, message, path, traceId); fixed 500s for client errors; correlation IDs; datasource via env vars |
 | `be8c706` | Ingestion v2 | Flyway V2; one idempotent JDBC chunk writer (`ON CONFLICT DO NOTHING RETURNING`); producer event ID or content fingerprint; 409 on reused IDs; streaming JSON/NDJSON batches |
 | `3303658` | Analytics API | Engine wired to a JDBC stream; `/summary`, `/variants`, `/rework`, `/bottlenecks`, `/sla`, `/graph`, `/insights`; timeline v2; paginated case list |
-| *(docs commit)* | Docs | This file; `docs/reliability.md` (idempotency, concurrent duplicates, partial batch failures, failure classes) |
+| `fa5a96d` | Docs | This file; `docs/reliability.md` (idempotency, concurrent duplicates, partial batch failures, failure classes) |
+| `docs: frontend prompt` | Frontend contract | `docs/frontend-lovable-prompt.md`: Lovable build prompt mirroring the exact v1 API: available vs planned endpoints, TypeScript types, allowed derived metrics, capability gating |
 
 ### Endpoints working now
 
@@ -89,6 +90,16 @@ rework, skipped credit check, SLA violations and duplicate rows. A demo script c
 
 **H. Phase 1 docs and report.** Rewrite `README.md`, `docs/api.md`, `docs/architecture.md`; add `docs/database.md`
 (indexes vs query patterns, V1–V4 decisions). Then produce the Phase 1 report (what changed, tests, tradeoffs).
+
+### Frontend integration (backend work the frontend depends on)
+- The frontend contract lives in `docs/frontend-lovable-prompt.md` and mirrors the Java response records field by field.
+  Update it whenever an endpoint, parameter or record changes.
+- CORS for the Vercel origin (allowed origins from an environment variable), exposing
+  `X-Correlation-Id, Location, ETag, Retry-After`. Alternatively the frontend proxies through Vercel rewrites.
+- Health details (`management.endpoint.health.show-details`, restricted once security exists) so the
+  frontend can show `db`/`diskSpace` component status.
+- Dataset field names in the prompt (`rowsRead`, `acceptedEvents`, `duplicateEvents`, `invalidRows`) and the
+  process registry shape are provisional; align the prompt when milestones E and F land.
 
 ### Phase 2 (design already chosen, see implementation plan section 5)
 Kafka (topic keyed by `processKey|caseId`; batch listener; poison → DLQ at once, transient DB errors → unbounded
