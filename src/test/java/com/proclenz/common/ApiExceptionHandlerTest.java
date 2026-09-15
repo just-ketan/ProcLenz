@@ -53,7 +53,18 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    void serviceUnavailableBusinessFailureAlsoAdvisesRetry() {
+        ProclenzException interrupted = new ProclenzException(ErrorCode.SERVICE_UNAVAILABLE, "Batch interrupted", List.of(), Map.of("accepted", 10L));
+
+        ResponseEntity<ApiError> response = handler.businessFailure(interrupted, request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(503);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER)).isEqualTo(ApiExceptionHandler.RETRY_AFTER_SECONDS);
+        assertThat(response.getBody().details()).containsEntry("accepted", 10L);
+    }
+
+    @Test
     void missingBodyGetsAGenericMessage() {
-        assertThat(ApiExceptionHandler.describeUnreadableBody(null)).isEqualTo("Request body is missing or unreadable");
+        assertThat(JsonErrorMessages.describe(null)).isEqualTo("Request body is missing or unreadable");
     }
 }

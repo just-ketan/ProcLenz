@@ -27,9 +27,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.exc.StreamReadException;
-import tools.jackson.databind.exc.MismatchedInputException;
 
 /**
  * Maps every failure to {@link ApiError}. Client mistakes become 4xx with an actionable message;
@@ -49,7 +46,9 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(ProclenzException.class)
     ResponseEntity<ApiError> businessFailure(ProclenzException exception, HttpServletRequest request) {
-        return respond(exception.code(), exception.getMessage(), request, exception.fieldErrors(), exception.details(), new HttpHeaders());
+        HttpHeaders headers = new HttpHeaders();
+        if (exception.code() == ErrorCode.SERVICE_UNAVAILABLE) headers.set(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS);
+        return respond(exception.code(), exception.getMessage(), request, exception.fieldErrors(), exception.details(), headers);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -71,7 +70,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<ApiError> unreadableBody(HttpMessageNotReadableException exception, HttpServletRequest request) {
-        return respond(ErrorCode.MALFORMED_REQUEST, describeUnreadableBody(exception.getCause()), request, List.of());
+        return respond(ErrorCode.MALFORMED_REQUEST, JsonErrorMessages.describe(exception.getCause()), request, List.of());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -125,32 +124,6 @@ public class ApiExceptionHandler {
     ResponseEntity<ApiError> unexpected(Exception exception, HttpServletRequest request) {
         log.error("Unhandled error during {} {}", request.getMethod(), request.getRequestURI(), exception);
         return respond(ErrorCode.INTERNAL_ERROR, "An unexpected error occurred; quote the traceId when reporting it", request, List.of());
-    }
-
-    /** Builds a client-safe message from Jackson's exception without echoing class names or parser internals. */
-    static String describeUnreadableBody(Throwable cause) {
-        if (cause instanceof StreamReadException) return "Request body is not valid JSON";
-        if (cause instanceof JacksonException jackson && !jackson.getPath().isEmpty()) {
-            String field = fieldPath(jackson);
-            if (jackson instanceof MismatchedInputException mismatch && mismatch.getTargetType() == Instant.class) {
-                return "Field '%s' must be an ISO-8601 instant such as 2026-09-15T09:00:00Z".formatted(field);
-            }
-            return "Field '%s' has an invalid value".formatted(field);
-        }
-        return "Request body is missing or unreadable";
-    }
-
-    private static String fieldPath(JacksonException exception) {
-        StringBuilder path = new StringBuilder();
-        for (JacksonException.Reference reference : exception.getPath()) {
-            if (reference.getPropertyName() != null) {
-                if (!path.isEmpty()) path.append('.');
-                path.append(reference.getPropertyName());
-            } else if (reference.getIndex() >= 0) {
-                path.append('[').append(reference.getIndex()).append(']');
-            }
-        }
-        return path.toString();
     }
 
     private ResponseEntity<ApiError> respond(ErrorCode code, String message, HttpServletRequest request, List<ApiError.FieldError> fieldErrors) {

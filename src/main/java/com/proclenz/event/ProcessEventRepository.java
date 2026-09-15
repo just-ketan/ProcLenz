@@ -1,11 +1,19 @@
 package com.proclenz.event;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ProcessEventRepository extends JpaRepository<ProcessEvent, UUID> {
-    List<ProcessEvent> findByProcessKeyAndCaseIdOrderByOccurredAtAscIdAsc(String processKey, String caseId);
+
+    /** Served by idx_event_case_time; arrival order breaks ties between simultaneous events. */
+    List<ProcessEvent> findByProcessKeyAndCaseIdOrderByOccurredAtAscIngestSeqAsc(String processKey, String caseId);
+
     List<ProcessEvent> findByProcessKeyOrderByCaseIdAscOccurredAtAscIdAsc(String processKey);
-    boolean existsByEventIdentity(String eventIdentity);
+
+    @Query("select e.id from ProcessEvent e where e.eventIdentity = :identity")
+    Optional<UUID> findIdByEventIdentity(@Param("identity") String identity);
 }

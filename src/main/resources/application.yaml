@@ -24,6 +24,14 @@ spring:
 server:
   port: 8080
 
+proclenz:
+  ingestion:
+    # Events per transaction: bounds memory per request and the work lost if one chunk fails.
+    chunk-size: 500
+    # Producer clocks drift; anything further in the future than this is treated as bad data.
+    max-clock-skew: PT24H
+    max-reported-rejections: 100
+
 logging:
   pattern:
     correlation: "[%X{correlationId:-}] "

@@ -15,7 +15,7 @@ public class CaseTimelineService {
     public CaseTimelineService(ProcessEventRepository repository) { this.repository = repository; }
     @Transactional(readOnly = true)
     public List<CaseTimelineItem> timeline(String processKey, String caseId) {
-        List<ProcessEvent> events = repository.findByProcessKeyAndCaseIdOrderByOccurredAtAscIdAsc(processKey, caseId);
+        List<ProcessEvent> events = repository.findByProcessKeyAndCaseIdOrderByOccurredAtAscIngestSeqAsc(processKey, caseId);
         if (events.isEmpty()) {
             throw new ProclenzException(ErrorCode.CASE_NOT_FOUND, "Case '%s' was not found in process '%s'".formatted(caseId, processKey));
         }
