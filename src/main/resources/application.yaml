@@ -31,6 +31,11 @@ proclenz:
     # Producer clocks drift; anything further in the future than this is treated as bad data.
     max-clock-skew: PT24H
     max-reported-rejections: 100
+  analytics:
+    # Case-duration SLA used when neither the request nor the process defines one.
+    default-sla: P7D
+    # Rows per round trip while streaming events into the process miner.
+    stream-fetch-size: 2000
 
 logging:
   pattern:

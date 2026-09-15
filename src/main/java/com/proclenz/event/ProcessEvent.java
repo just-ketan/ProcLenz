@@ -53,17 +53,6 @@ public class ProcessEvent {
     protected ProcessEvent() {
     }
 
-    public ProcessEvent(UUID id, String processKey, String caseId, String activity, Instant occurredAt, String resource, String eventIdentity) {
-        this.id = id;
-        this.processKey = processKey;
-        this.caseId = caseId;
-        this.activity = activity;
-        this.occurredAt = occurredAt;
-        this.resource = resource;
-        this.eventIdentity = eventIdentity;
-        this.contentHash = eventIdentity;
-    }
-
     public UUID getId() {
         return id;
     }
