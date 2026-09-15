@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: proclenz-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: proclenz
+      POSTGRES_USER: proclenz
+      POSTGRES_PASSWORD: proclenz
+    ports:
+      - "5432:5432"
+    volumes:
+      - proclenz-postgres-data:/var/lib/postgresql/data
+  
+volumes:
+  proclenz-postgres-data:
