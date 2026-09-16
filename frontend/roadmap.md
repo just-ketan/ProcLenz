@@ -1,0 +1,4 @@
+- [x] Build Proclenz overview workspace from the uploaded product brief
+- [x] Add dense enterprise shell, process controls, KPI pipeline, process flow, issues, and variants
+- [x] Add semantic Proclenz design tokens and responsive presentation
+- [ ] Connect real backend API endpoints when a backend base URL is provided
